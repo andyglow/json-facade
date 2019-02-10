@@ -1,43 +1,24 @@
 package json
 
-import java.io.InputStream
+import java.io.OutputStream
 import java.nio.charset.Charset
-import java.util.ServiceLoader
 
-import scala.collection.JavaConverters._
-import scala.io.Codec
-import scala.util.Try
 import scala.language.implicitConversions
+import scala.util.Try
 
 
 package object facade {
 
-  lazy val impl: Implementation = {
-    val loader = ServiceLoader.load(classOf[Implementation])
-    val impls = loader.iterator().asScala.toSeq
-    if (impls.isEmpty) sys.error("can't load json language implementation")
-    else if (impls.size > 1) {
-      sys.props.get("json.impl.preferred") match {
-        case Some(className)  => impls.find(_.getClass.getName == className) getOrElse impls.head
-        case None             => impls.head
-      }
-    } else
-      impls.head
-  }
+  def readJson[T](x: From)(implicit r: ReadF[T]): Try[T] = r read x
 
-  type Value = impl.Value
+  object writeJson {
 
-  def parseJs(x: Input): Try[impl.Value] = impl.parse(x)
+    def asString[T](x: T)(implicit w: WriteF[T]): String = w asString x
 
-  def stringifyJs(x: impl.Value): String = impl.stringify(x)
+    def asBytes[T](x: T, ch: Charset = Charset.defaultCharset)(implicit w: WriteF[T]): Array[Byte] = w.asBytes(x, ch)
 
-  def read[T](x: Input)(implicit r: ReadF[T]): Try[T] = impl match {
-    case impl: Direct => impl.directParse(x)
-    case _            => for { v <- parseJs(x); j <- r.read(v) } yield j
-  }
+    def toBytes[T](x: T, out: Array[Byte], offset: Int, ch: Charset = Charset.defaultCharset)(implicit w: WriteF[T]): Unit = w.toBytes(x, out, offset, ch)
 
-  def write[T](x: T)(implicit w: WriteF[T]): String = impl match {
-    case impl: Direct => impl.directStringify(x)
-    case _            => stringifyJs(w.write(x))
+    def toOutputStream[T](x: T, os: OutputStream, ch: Charset= Charset.defaultCharset)(implicit w: WriteF[T]): Unit = w.toOutputStream(x, os, ch)
   }
 }

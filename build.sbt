@@ -52,7 +52,7 @@ lazy val circeF = project.in(file("impl-circe"))
   .dependsOn(api % "compile->compile;test->test")
   .settings(
     commons,
-    name := "json-facade-play-json",
+    name := "json-facade-circe",
     libraryDependencies ++= circe.libs)
 
 lazy val sprayF = project.in(file("impl-spray"))

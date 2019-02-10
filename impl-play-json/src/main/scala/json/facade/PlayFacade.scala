@@ -1,54 +1,35 @@
 package json.facade
 
 import play.api.libs.json._
-import Input._
+import From._
 
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 
-class PlayFacade extends Implementation {
+class PlayFacade {
   import PlayFacade._
-
-  override type Value = JsValue
-
-  override def parse(x: Input): Try[JsValue] = Try { Json.parse(x.mkString) }
-
-  override def stringify(x: JsValue): String = Json.stringify(x)
 
   implicit def lookupReads[T](implicit r: Reads[T]): ReadF[T] = new ReadF[T] {
 
-    override def read(x: json.facade.Value): Try[T] = r.reads(x.asInstanceOf[Value]) match {
-      case JsSuccess(v, _) => Success(v)
-      case err: JsError => Failure(PlayJsonError(err))
-    }
+    override def read(x: From): Try[T] = for {
+      json  <- Try { Json.parse(x.string) }
+      v     <- Try { r.reads(json) } flatMap {
+                 case JsSuccess(v, _) => Success(v)
+                 case err: JsError    => Failure(PlayJsonError(err))
+               }
+    } yield v
   }
 
-  implicit def lookupWrites[T](implicit w: Writes[T]): WriteF[T] = new WriteF[T] {
+  implicit def lookupWrites[T](implicit w: Writes[T]): WriteF[T] = new WriteFBase[T] {
 
-    override def write(x: T): json.facade.Value = w.writes(x).asInstanceOf[json.facade.Value]
+    override def asString(x: T): String = Json stringify w.writes(x)
   }
-
-  implicit def lookupFormat[T](implicit f: Format[T]): FormatF[T] = new FormatF[T] {
-
-    override def read(x: json.facade.Value): Try[T] = f.reads(x.asInstanceOf[Value]) match {
-      case JsSuccess(v, _) => Success(v)
-      case err: JsError => Failure(PlayJsonError(err))
-    }
-
-    override def write(x: T): json.facade.Value = f.writes(x).asInstanceOf[json.facade.Value]
-  }
-
-//  override def deriveR[T]: R[T] = lookupReads(Json.reads[T])
-//
-//  override def deriveW[T]: W[T] = lookupWrites(Json.writes[T])
-//
-//  override def deriveF[T]: F[T] = lookupFormat(Json.format[T])
 }
 
 object PlayFacade extends PlayFacade {
 
-  final case class PlayJsonError(error: JsError) extends RuntimeException {
+  final case class PlayJsonError(error: JsError) extends RuntimeException with JsonException {
     override def getMessage: String =
       JsError.toJson(error).toString()
   }

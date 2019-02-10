@@ -10,18 +10,15 @@ import akka.http.scaladsl.util.FastFuture
 import akka.util.ByteString
 
 import scala.collection.immutable.Seq
-import json.facade._
 
 import scala.util.Failure
 
 
 trait AkkaHttpAdapter {
 
-  def unmarshallerContentTypes: Seq[ContentTypeRange] =
-    mediaTypes.map(ContentTypeRange.apply)
+  def unmarshallerContentTypes: Seq[ContentTypeRange] = mediaTypes.map(ContentTypeRange.apply)
 
-  def mediaTypes: Seq[MediaType.WithFixedCharset] =
-    List(`application/json`)
+  def mediaTypes: Seq[MediaType.WithFixedCharset] = List(`application/json`)
 
   private val jsonStringUnmarshaller =
     Unmarshaller.byteStringUnmarshaller
@@ -34,21 +31,22 @@ trait AkkaHttpAdapter {
   private val jsonStringMarshaller =
     Marshaller.oneOf(mediaTypes: _*)(Marshaller.stringMarshaller)
 
-  implicit def fromByteStringUnmarshaller[A: ReadF]: FromByteStringUnmarshaller[A] = {
-    def parse(bs: ByteString) = FastFuture apply read(bs.utf8String)
-    Unmarshaller.withMaterializer[ByteString, A](_ => _ => parse)
+  private def tryReadJson[A: ReadF](x: String) = readJson(x) recoverWith {
+    case err: JsonException => Failure(RejectionError(ValidationRejection(err.getMessage, Some(err))))
+    case err: Throwable     => Failure(err)
   }
 
-  implicit def unmarshaller[A](implicit r: ReadF[A]): FromEntityUnmarshaller[A] = {
-    jsonStringUnmarshaller map { data =>
-      read(data).recoverWith {
-        case err: Throwable => Failure(RejectionError(ValidationRejection(err.getMessage)))
-      }.get
-    }
-  }
+  private def tryReadJsonF[A: ReadF](bs: ByteString) =
+    FastFuture { tryReadJson(bs.utf8String) }
+
+  implicit def fromByteStringUnmarshaller[A: ReadF]: FromByteStringUnmarshaller[A] =
+    Unmarshaller.withMaterializer[ByteString, A](_ => _ => tryReadJsonF(_))
+
+  implicit def unmarshaller[A: ReadF]: FromEntityUnmarshaller[A] =
+    jsonStringUnmarshaller map { tryReadJson(_).get }
 
   implicit def marshaller[A](implicit writes: WriteF[A]): ToEntityMarshaller[A] =
-    jsonStringMarshaller.compose(x => write(x))
+    jsonStringMarshaller compose { writeJson.asString(_) }
 }
 
 object AkkaHttpAdapter extends AkkaHttpAdapter

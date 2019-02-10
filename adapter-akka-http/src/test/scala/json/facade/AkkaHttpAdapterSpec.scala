@@ -23,7 +23,7 @@ final class AkkaHttpAdapterSpec extends AsyncWordSpec with Matchers with BeforeA
   private implicit val system = ActorSystem()
   private implicit val mat    = ActorMaterializer()
 
-  "PlayJsonSupport" should {
+  "AkkaHttpAdapter with PlayFacade" should {
     "enable marshalling and unmarshalling objects for which `Writes` and `Reads` exist" in {
       val foo = Foo("bar")
       Marshal(foo)
@@ -37,7 +37,7 @@ final class AkkaHttpAdapterSpec extends AsyncWordSpec with Matchers with BeforeA
       Unmarshal(entity)
         .to[Foo]
         .failed
-        .map(_ should have message "requirement failed: bar must be 'bar'!")
+        .map { _ should have message "requirement failed: bar must be 'bar'!" }
     }
 
     "provide stringified error representation for parsing errors" in {

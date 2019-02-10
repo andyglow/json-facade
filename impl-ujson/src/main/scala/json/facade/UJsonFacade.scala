@@ -1,6 +1,11 @@
 package json.facade
 
-import Input._
+import java.io.OutputStream
+import java.nio.charset.Charset
+
+import From._
+import ujson.{BaseRenderer, BytesRenderer, StringRenderer}
+import upickle.core.Visitor
 
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
@@ -8,56 +13,27 @@ import upickle.default._
 
 import scala.util.control.NoStackTrace
 
-class UJsonFacade extends Implementation with Direct {
+class UJsonFacade {
   import UJsonFacade._
-
-  override type Value = ujson.Value
-
-  override def parse(x: Input): Try[Value] = Try { ujson.read(x.mkString) }
-
-  override def directParse[T: ReadF](x: Input): Try[T] = for {
-    r <- readerOf[T]
-    t <- Try { upickle.default.read(x.mkString)(r) }
-  } yield t
-
-  override def directStringify[T: WriteF](t: T): String = {
-    val w = writerOf[T].get
-    upickle.default.write(t)(w)
-  }
-
-  override def stringify(x: Value): String = x.render()
 
   implicit def lookupReads[T](implicit r: Reader[T]): ReadF[T] = new ReadFacade[T](r)
 
   implicit def lookupWrites[T](implicit w: Writer[T]): WriteF[T] = new WriteFacade[T](w)
 
-  implicit def lookupFormat[T](implicit rw: ReadWriter[T]): FormatF[T] = new FormatFacade[T](rw)
 }
 
 object UJsonFacade extends UJsonFacade {
 
   class ReadFacade[T](val r: Reader[T]) extends ReadF[T] {
-    def read(x: json.facade.Value): Try[T] = Try { upickle.default.read(x.asInstanceOf[Value])(r) }
+    def read(x: From): Try[T] = Try { upickle.default.read(x.bytes._1)(r) }
   }
 
-  class WriteFacade[T](val w: Writer[T]) extends WriteF[T] {
-    def write(x: T): json.facade.Value = writeJs(x)(w).asInstanceOf[json.facade.Value]
-  }
+  class WriteFacade[T](val w: Writer[T]) extends WriteFBase[T] {
 
-  class FormatFacade[T](val rw: ReadWriter[T]) extends FormatF[T] {
-    def read(x: json.facade.Value): Try[T] = Try { upickle.default.read(x.asInstanceOf[Value])(rw) }
-    def write(x: T): json.facade.Value = writeJs(x)(rw).asInstanceOf[json.facade.Value]
-  }
+    private def render[O](x: T, r: Visitor[_, O]): O = writeJs(x)(w).transform(r)
 
-  private def readerOf[T](implicit x: ReadF[T]): Try[Reader[T]] = x match {
-    case x: FormatFacade[T] => Success(x.rw)
-    case x: ReadFacade[T]   => Success(x.r)
-    case _                  => Failure(new Exception(s"ReadF of type ${x.getClass} is unknown from UJsonFacade perspective") with NoStackTrace)
-  }
+    def asString(x: T): String = render(x, StringRenderer(-1, false)).toString
 
-  private def writerOf[T](implicit x: WriteF[T]): Try[Writer[T]] = x match {
-    case x: FormatFacade[T] => Success(x.rw)
-    case x: WriteFacade[T]  => Success(x.w)
-    case _                  => Failure(new Exception(s"WriteF of type ${x.getClass} is unknown from UJsonFacade perspective") with NoStackTrace)
+    override def asBytes(x: T, charset: Charset): Array[Byte] = render(x, BytesRenderer()).toBytes
   }
 }

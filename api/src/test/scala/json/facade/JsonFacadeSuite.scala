@@ -6,7 +6,7 @@ import org.scalatest.Matchers._
 import scala.math.BigDecimal
 import scala.util.Success
 
-abstract class JsonFacadeSuite(name: String)(implicit fmt: FormatF[Model]) extends WordSpec {
+abstract class JsonFacadeSuite(name: String)(implicit r: ReadF[Model], w: WriteF[Model]) extends WordSpec {
 
   name should {
 
@@ -25,9 +25,9 @@ abstract class JsonFacadeSuite(name: String)(implicit fmt: FormatF[Model]) exten
         BigDecimal(Math.PI),
         List(Tag.Named("foo"), Tag.Generic, Tag.Named("bar")))
 
-      val jsonStr = write(model)
+      val jsonStr = writeJson.asString(model)
       info(jsonStr)
-      val restoredModel = read[Model](jsonStr)
+      val restoredModel = readJson[Model](jsonStr)
       restoredModel shouldBe Success(model)
     }
   }
