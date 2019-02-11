@@ -8,7 +8,6 @@ lazy val scala211 = "2.11.12"
 lazy val commons = Seq(
 organization        := "com.github.andyglow",
 name                := "json-facade",
-version             := "0.1",
 homepage            := Some(new URL("http://github.com/andyglow/json-facade")),
 startYear           := Some(2019),
 organizationName    := "andyglow",
