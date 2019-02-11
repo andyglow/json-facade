@@ -1,4 +1,5 @@
 import Dependencies._
+import xerial.sbt.Sonatype._
 
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
@@ -7,6 +8,28 @@ lazy val commons = Seq(
 organization        := "com.github.andyglow",
 name                := "json-facade",
 version             := "0.1",
+homepage            := Some(new URL("http://github.com/andyglow/json-facade")),
+startYear           := Some(2019),
+organizationName    := "andyglow",
+publishTo           := sonatypePublishTo.value,
+licenses            := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
+sonatypeProfileName := "com.github.andyglow", 
+sonatypeProjectHosting := Some(
+    GitHubHosting(
+      "andyglow",
+      "json-facade",
+      "andyglow@gmail.com")),
+scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/andyglow/json-facade"),
+    "scm:git@github.com:andyglow/json-facade.git")),
+developers := List(
+  Developer(
+    id    = "andyglow",
+    name  = "Andriy Onyshchuk",
+    email = "andyglow@gmail.com",
+    url   = url("https://ua.linkedin.com/in/andyglow"))),
+releaseCrossBuild := true,
 scalaVersion        := scala211,
 publishMavenStyle   := true,
 publishArtifact     := true,
