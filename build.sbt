@@ -13,12 +13,13 @@ startYear           := Some(2019),
 organizationName    := "andyglow",
 publishTo           := sonatypePublishTo.value,
 licenses            := Seq(("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
+resolvers           += Resolver.url("scoverage-bintray", url("https://dl.bintray.com/sksamuel/sbt-plugins/"))(Resolver.ivyStylePatterns),
 sonatypeProfileName := "com.github.andyglow", 
 sonatypeProjectHosting := Some(
-    GitHubHosting(
-      "andyglow",
-      "json-facade",
-      "andyglow@gmail.com")),
+  GitHubHosting(
+    "andyglow",
+    "json-facade",
+    "andyglow@gmail.com")),
 scmInfo := Some(
   ScmInfo(
     url("https://github.com/andyglow/json-facade"),
@@ -29,7 +30,7 @@ developers := List(
     name  = "Andriy Onyshchuk",
     email = "andyglow@gmail.com",
     url   = url("https://ua.linkedin.com/in/andyglow"))),
-releaseCrossBuild := true,
+releaseCrossBuild   := true,
 scalaVersion        := scala211,
 publishMavenStyle   := true,
 publishArtifact     := true,
