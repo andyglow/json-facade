@@ -1,5 +1,6 @@
 import Dependencies._
 import xerial.sbt.Sonatype._
+import ReleaseTransformations._
 
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
@@ -58,7 +59,21 @@ scalacOptions       ++= {
       case _             => options
     }
   },
-  libraryDependencies ++= Seq(scalatest % Test))
+releaseCrossBuild := true, // true if you cross-build the project for multiple Scala versions
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  releaseStepCommandAndRemaining("+publishSigned"),
+  setNextVersion,
+  commitNextVersion,
+  releaseStepCommand("sonatypeReleaseAll"),
+  pushChanges),
+libraryDependencies ++= Seq(scalatest % Test))
 
 lazy val api = project.in(file("api"))
   .settings(
