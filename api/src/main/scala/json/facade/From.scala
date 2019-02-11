@@ -14,29 +14,28 @@ object From {
 
   case class FromString(value: String) extends From
 
-  case class FromBytes(value: Array[Byte], charset: Charset) extends From
+  case class FromBytes(value: Array[Byte]) extends From
 
-  case class FromInputStream(value: InputStream, charset: Charset) extends From
+  case class FromInputStream(value: InputStream) extends From
 
-  implicit def fromBytes(x: Array[Byte], charset: Charset = Charset.defaultCharset()): From = FromBytes(x, charset)
+  implicit def fromBytes(x: Array[Byte]): From = FromBytes(x)
 
-  implicit def fromInputStream(x: InputStream, charset: Charset = Charset.defaultCharset()): From = FromInputStream(x, charset)
+  implicit def fromInputStream(x: InputStream): From = FromInputStream(x)
 
   implicit def fromString(x: String): From = FromString(x)
-
 
   implicit class FromAs(val x: From) extends AnyVal {
 
     def string: String = x match {
-      case FromString(v)          => v
-      case FromBytes(v, cs)       => new String(v, cs)
-      case FromInputStream(v, cs) => scala.io.Source.fromInputStream(v)(Codec(cs)).mkString
+      case FromString(v)      => v
+      case FromBytes(v)       => new String(v)
+      case FromInputStream(v) => scala.io.Source.fromInputStream(v)(Codec(Charset.defaultCharset)).mkString
     }
 
-    def bytes: (Array[Byte], Charset) = x match {
-      case FromString(v)          => (v.getBytes, Charset.defaultCharset)
-      case FromBytes(v, cs)       => (v, cs)
-      case FromInputStream(v, cs) => (readBytes(v, 1024), cs)
+    def bytes: Array[Byte] = x match {
+      case FromString(v)      => v.getBytes
+      case FromBytes(v)       => v
+      case FromInputStream(v) => readBytes(v, 1024)
     }
   }
 

@@ -1,15 +1,12 @@
 package json.facade
 
 import java.io.OutputStream
-import java.nio.charset.Charset
 
-import From._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+import json.facade.From._
 
 import scala.language.implicitConversions
-import scala.util.{Failure, Success, Try}
-import com.github.plokhotnyuk.jsoniter_scala.core._
-
-import scala.util.control.NoStackTrace
+import scala.util.Try
 
 
 class JsoniterFacade {
@@ -25,9 +22,9 @@ object JsoniterFacade extends JsoniterFacade {
   class ReadFacade[T](val codec: JsonValueCodec[T]) extends ReadF[T] {
     def read(x: From): Try[T] = Try {
       x match {
-        case FromString(str)         => readFromString(str)(codec)
-        case FromBytes(bytes, cs)    => readFromArray(bytes)(codec)
-        case FromInputStream(is, cs) => readFromStream(is)(codec)
+        case FromString(str)     => readFromString(str)(codec)
+        case FromBytes(bytes)    => readFromArray(bytes)(codec)
+        case FromInputStream(is) => readFromStream(is)(codec)
       }
     }
   }
@@ -35,17 +32,15 @@ object JsoniterFacade extends JsoniterFacade {
   class WriteFacade[T](val codec: JsonValueCodec[T]) extends WriteF[T] {
     override def asString(x: T): String = writeToString(x)(codec)
 
-    override def asBytes(x: T, charset: Charset): Array[Byte] = writeToArray(x)(codec)
+    override def asBytes(x: T): Array[Byte] = writeToArray(x)(codec)
 
     override def toBytes(
       x: T,
       out: Array[Byte],
-      offset: Int,
-      charset: Charset): Unit = writeToSubArray(x, out, offset, out.length)(codec)
+      offset: Int): Unit = writeToSubArray(x, out, offset, out.length)(codec)
 
     override def toOutputStream(
       x: T,
-      os: OutputStream,
-      charset: Charset): Unit = writeToStream(x, os)(codec)
+      os: OutputStream): Unit = writeToStream(x, os)(codec)
   }
 }

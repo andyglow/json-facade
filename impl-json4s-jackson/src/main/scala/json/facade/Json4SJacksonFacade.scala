@@ -18,8 +18,8 @@ class Json4SJacksonFacade {
     override def read(x: From): Try[T] = for {
       json <- Try {
         x match {
-          case FromInputStream(value, charset) => JsonMethods.parse(value)
-          case _                               => JsonMethods.parse(x.string)
+          case FromInputStream(value) => JsonMethods.parse(value)
+          case _                      => JsonMethods.parse(x.string)
         }
       }
       v <- Try { json.extract[T] }

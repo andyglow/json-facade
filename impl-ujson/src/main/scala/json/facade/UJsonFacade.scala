@@ -1,17 +1,12 @@
 package json.facade
 
-import java.io.OutputStream
-import java.nio.charset.Charset
-
-import From._
-import ujson.{BaseRenderer, BytesRenderer, StringRenderer}
+import json.facade.From._
+import ujson.{BytesRenderer, StringRenderer}
 import upickle.core.Visitor
-
-import scala.language.implicitConversions
-import scala.util.{Failure, Success, Try}
 import upickle.default._
 
-import scala.util.control.NoStackTrace
+import scala.language.implicitConversions
+import scala.util.Try
 
 class UJsonFacade {
   import UJsonFacade._
@@ -25,7 +20,7 @@ class UJsonFacade {
 object UJsonFacade extends UJsonFacade {
 
   class ReadFacade[T](val r: Reader[T]) extends ReadF[T] {
-    def read(x: From): Try[T] = Try { upickle.default.read(x.bytes._1)(r) }
+    def read(x: From): Try[T] = Try { upickle.default.read(x.bytes)(r) }
   }
 
   class WriteFacade[T](val w: Writer[T]) extends WriteFBase[T] {
@@ -34,6 +29,6 @@ object UJsonFacade extends UJsonFacade {
 
     def asString(x: T): String = render(x, StringRenderer(-1, false)).toString
 
-    override def asBytes(x: T, charset: Charset): Array[Byte] = render(x, BytesRenderer()).toBytes
+    override def asBytes(x: T): Array[Byte] = render(x, BytesRenderer()).toBytes
   }
 }

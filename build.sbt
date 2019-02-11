@@ -124,8 +124,6 @@ lazy val akkaHttpAdapter = project.in(file("adapter-akka-http"))
 lazy val root = project.in(file("."))
   .aggregate(api, playF, circeF, sprayF, json4sNativeF, json4sJacksonF, uJsonF, jsoniterF, akkaHttpAdapter)
   .settings(
+    commons,
     name := "json-facade",
-    crossScalaVersions := Nil,
-    publish / skip := true,
-    publishArtifact := false,
     aggregate in update := false)

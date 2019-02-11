@@ -1,39 +1,37 @@
 package json.facade
 
 import java.io.OutputStream
-import java.nio.charset.Charset
+
 
 trait WriteF[-T] {
 
   def asString(x: T): String
 
-  def asBytes(x: T, charset: Charset = Charset.defaultCharset()): Array[Byte]
+  def asBytes(x: T): Array[Byte]
 
-  def toBytes(x: T, out: Array[Byte], offset: Int, charset: Charset = Charset.defaultCharset()): Unit
+  def toBytes(x: T, out: Array[Byte], offset: Int): Unit
 
-  def toOutputStream(x: T, os: OutputStream, charset: Charset= Charset.defaultCharset()): Unit
+  def toOutputStream(x: T, os: OutputStream): Unit
 }
 
 private[facade] abstract class WriteFBase[-T] extends WriteF[T] {
 
-  override def asBytes(x: T, charset: Charset = Charset.defaultCharset()): Array[Byte] = asString(x) getBytes charset
+  override def asBytes(x: T): Array[Byte] = asString(x).getBytes()
 
   override def toBytes(
     x: T,
     out: Array[Byte],
-    offset: Int,
-    charset: Charset = Charset.defaultCharset()): Unit = {
+    offset: Int): Unit = {
 
-    val arr = asBytes(x, charset)
+    val arr = asBytes(x)
     Array.copy(arr, 0, out, offset, arr.length)
   }
 
   override def toOutputStream(
     x: T,
-    os: OutputStream,
-    charset: Charset = Charset.defaultCharset()): Unit = {
+    os: OutputStream): Unit = {
 
-    val arr = asBytes(x, charset)
+    val arr = asBytes(x)
     os.write(arr)
   }
 }
